@@ -1,5 +1,5 @@
 {
-  "name": "medusa-dtc-nextstore",
+  "name": "medusa-dtc-frontend",
   "version": "1.0.3",
   "private": true,
   "author": "Zerops",
@@ -7,7 +7,7 @@
   "description": "Medusa v2.21 DTC Next.js 15 App Router storefront for Zerops (Node SSR).",
   "repository": {
     "type": "git",
-    "url": "https://github.com/zerops-recipe-apps/medusa-dtc-nextstore.git"
+    "url": "https://github.com/zerops-recipe-apps/medusa-dtc-frontend.git"
   },
   "homepage": "https://github.com/zerops-recipe-apps/medusa-dtc",
   "bugs": {

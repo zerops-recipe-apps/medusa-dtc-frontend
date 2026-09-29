@@ -1,4 +1,4 @@
-# medusa-dtc-nextstore
+# medusa-dtc-frontend
 
 Next.js 15 DTC storefront (Yarn 3 Berry). Pairs with [medusa-dtc](https://github.com/zerops-recipe-apps/medusa-dtc).
 
