@@ -1,6 +1,6 @@
 import "server-only"
 
-import { readPublishableKeyFromEnv } from "@/lib/util/publishable-key"
+import { readPublishableKeyFromEnv } from "@lib/util/publishable-key"
 
 type KeyCache = {
   token: string

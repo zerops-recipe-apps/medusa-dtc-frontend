@@ -1,41 +1,67 @@
+import {
+  isResolvedPublishableKey,
+  readPublishableKeyFromEnv,
+} from "@lib/util/publishable-key"
+
 export const getBaseURL = () => {
-  return process.env.NEXT_PUBLIC_BASE_URL || "https://localhost:8000"
+  const raw = process.env.NEXT_PUBLIC_BASE_URL?.trim()
+  if (raw) {
+    try {
+      return new URL(raw).origin
+    } catch {
+      // Invalid NEXT_PUBLIC_BASE_URL must not crash layouts.
+    }
+  }
+  return "https://localhost:8000"
 }
 
-function readEnv(name: string): string {
-  // Bracket access so Next/Turbopack cannot inline an empty build-time value.
-  return process.env[name]?.trim() || ""
+function isUsableBackendUrl(value?: string): value is string {
+  const trimmed = value?.trim()
+  if (!trimmed || trimmed.includes("${")) {
+    return false
+  }
+
+  try {
+    const url = new URL(trimmed)
+    if (!url.hostname) {
+      return false
+    }
+    if (
+      process.env.NODE_ENV === "production" &&
+      (url.hostname === "localhost" || url.hostname === "127.0.0.1")
+    ) {
+      return false
+    }
+    return true
+  } catch {
+    return false
+  }
 }
 
-/** Private hostname on the server; public API URL in the browser. */
 export function getMedusaBackendUrl(): string {
-  return (
-    readEnv("MEDUSA_BACKEND_URL") ||
-    readEnv("NEXT_PUBLIC_MEDUSA_BACKEND_URL") ||
-    "http://localhost:9000"
-  )
-}
-
-function isResolvedPublishableKey(value: string): boolean {
-  return Boolean(value) && value.startsWith("pk_") && !value.includes("${")
-}
-
-/**
- * Publishable key for Medusa store APIs.
- * NEXT_PUBLIC_* is baked at build; MEDUSA_PUBLISHABLE_KEY is the runtime fallback
- * when the first storefront build ran before backend seed wrote CHANNEL_PUBLISHABLE_KEY.
- */
-export function getMedusaPublishableKey(): string {
-  for (const name of [
-    "MEDUSA_PUBLISHABLE_KEY",
-    "NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY",
-    "RUNTIME_NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY",
+  for (const candidate of [
+    process.env.MEDUSA_BACKEND_URL,
+    process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL,
+    process.env.API_URL,
   ]) {
-    const value = readEnv(name)
-    if (isResolvedPublishableKey(value)) {
-      return value
+    if (isUsableBackendUrl(candidate)) {
+      return candidate.trim()
     }
   }
 
-  return ""
+  return "http://localhost:9000"
 }
+
+export function getBrowserMedusaBackendUrl(): string {
+  if (typeof window !== "undefined") {
+    return `${window.location.origin}/api/medusa`
+  }
+
+  return getMedusaBackendUrl()
+}
+
+export function getMedusaPublishableKey(): string {
+  return readPublishableKeyFromEnv()
+}
+
+export { isResolvedPublishableKey }

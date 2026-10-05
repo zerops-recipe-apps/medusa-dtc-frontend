@@ -1,33 +1,50 @@
 import { getLocaleHeader } from "@lib/util/get-locale-header"
 import Medusa, { FetchArgs, FetchInput } from "@medusajs/js-sdk"
-import { getMedusaBackendUrl, getMedusaPublishableKey } from "./util/env"
+import {
+  getBrowserMedusaBackendUrl,
+  getMedusaBackendUrl,
+  getMedusaPublishableKey,
+} from "@lib/util/env"
 
-export const sdk = new Medusa({
-  baseUrl: getMedusaBackendUrl(),
-  debug: process.env.NODE_ENV === "development",
-  publishableKey: getMedusaPublishableKey(),
-})
+function createMedusaClient() {
+  const baseUrl =
+    typeof window !== "undefined"
+      ? getBrowserMedusaBackendUrl()
+      : getMedusaBackendUrl()
 
-const originalFetch = sdk.client.fetch.bind(sdk.client)
+  const client = new Medusa({
+    baseUrl,
+    debug: process.env.NODE_ENV === "development",
+    publishableKey: getMedusaPublishableKey() || undefined,
+  })
 
-sdk.client.fetch = async <T>(
-  input: FetchInput,
-  init?: FetchArgs
-): Promise<T> => {
-  const headers = init?.headers ?? {}
-  let localeHeader: Record<string, string | null> | undefined
-  try {
-    localeHeader = await getLocaleHeader()
-    headers["x-medusa-locale"] ??= localeHeader["x-medusa-locale"]
-  } catch {}
+  const originalFetch = client.client.fetch.bind(client.client)
+  client.client.fetch = async <T>(
+    input: FetchInput,
+    init?: FetchArgs
+  ): Promise<T> => {
+    const headers = { ...(init?.headers as Record<string, string>) }
+    try {
+      const localeHeader = await getLocaleHeader()
+      const locale = localeHeader["x-medusa-locale"]
+      if (locale) {
+        headers["x-medusa-locale"] ??= locale
+      }
+    } catch {}
 
-  const newHeaders = {
-    ...localeHeader,
-    ...headers,
+    return originalFetch<T>(input, { ...init, headers })
   }
-  init = {
-    ...init,
-    headers: newHeaders,
-  }
-  return originalFetch(input, init)
+
+  return client
 }
+
+export const sdk = new Proxy({} as Medusa, {
+  get(_target, prop) {
+    const client = createMedusaClient()
+    const value = (client as Medusa)[prop as keyof Medusa]
+    if (typeof value === "function") {
+      return (value as (...args: unknown[]) => unknown).bind(client)
+    }
+    return value
+  },
+})
