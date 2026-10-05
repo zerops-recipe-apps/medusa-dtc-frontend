@@ -58,6 +58,9 @@ zerops:
         NEXT_PUBLIC_DEFAULT_REGION: de
         NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY: ${CHANNEL_PUBLISHABLE_KEY}
         NEXT_PUBLIC_SEARCH_ENDPOINT: ${SEARCH_URL}
+        NEXT_PUBLIC_FEATURE_SEARCH_ENABLED: "true"
+        NEXT_PUBLIC_INDEX_NAME: products
+        NEXT_PUBLIC_SEARCH_API_KEY: ${search_defaultSearchKey}
         OBJECT_STORAGE_API_URL: ${storage_apiUrl}
       start: yarn start
 
@@ -115,6 +118,9 @@ zerops:
         NEXT_PUBLIC_DEFAULT_REGION: de
         NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY: ${CHANNEL_PUBLISHABLE_KEY}
         NEXT_PUBLIC_SEARCH_ENDPOINT: ${SEARCH_URL}
+        NEXT_PUBLIC_FEATURE_SEARCH_ENABLED: "true"
+        NEXT_PUBLIC_INDEX_NAME: products
+        NEXT_PUBLIC_SEARCH_API_KEY: ${search_defaultSearchKey}
         OBJECT_STORAGE_API_URL: ${storage_apiUrl}
       start: yarn start
 

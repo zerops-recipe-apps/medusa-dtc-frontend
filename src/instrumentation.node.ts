@@ -1,4 +1,4 @@
-import { readPublishableKeyFromEnv } from "@/lib/util/publishable-key"
+import { readPublishableKeyFromEnv } from "@lib/util/publishable-key"
 
 /**
  * Warm up the publishable key in the background. Never exit the process here —
@@ -11,7 +11,7 @@ void (async () => {
 
   try {
     const { resolvePublishableKey } = await import(
-      "@/lib/medusa/publishable-key.server"
+      "@lib/medusa/publishable-key.server"
     )
     const key = await resolvePublishableKey()
     if (key) {
