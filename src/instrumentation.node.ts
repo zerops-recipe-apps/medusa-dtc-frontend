@@ -1,30 +1,28 @@
+import { readPublishableKeyFromEnv } from "@/lib/util/publishable-key"
+
 /**
- * Node-only: a running process keeps boot-time env. After medusa seed
- * writes CHANNEL_PUBLISHABLE_KEY, exit so the supervisor starts a new
- * next-server (or sooner via /api/internal/reload-env).
+ * Warm up the publishable key in the background. Never exit the process here —
+ * Zerops readiness hits /api/health on :8000; exiting on boot causes deploy failure.
  */
-const keyValues = [
-  process.env.MEDUSA_PUBLISHABLE_KEY,
-  process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY,
-  process.env.RUNTIME_NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY,
-]
+void (async () => {
+  if (readPublishableKeyFromEnv()) {
+    return
+  }
 
-const hasUnresolvedRef = keyValues.some(
-  (value) => Boolean(value) && value.includes("${")
-)
+  try {
+    const { resolvePublishableKey } = await import(
+      "@/lib/medusa/publishable-key.server"
+    )
+    const key = await resolvePublishableKey()
+    if (key) {
+      console.log("instrumentation: publishable key loaded")
+      return
+    }
+  } catch (error) {
+    console.warn("instrumentation: publishable key bootstrap failed", error)
+  }
 
-const resolved = keyValues.some(
-  (value) => Boolean(value) && value.startsWith("pk_") && !value.includes("${")
-)
-
-if (process.env.ZEROPS_ProjectId && !resolved) {
-  const delayMs = hasUnresolvedRef
-    ? 0
-    : Number(process.env.PUBLISHABLE_KEY_RESPAWN_MS || 15_000)
   console.warn(
-    `instrumentation: publishable key is not a pk_ value; exiting in ${Math.round(delayMs / 1000)}s so Zerops respawns with the current env store.`
+    "instrumentation: publishable key not set yet; storefront will retry on requests until medusa seed writes CHANNEL_PUBLISHABLE_KEY"
   )
-  setTimeout(() => {
-    process.exit(0)
-  }, delayMs)
-}
+})()

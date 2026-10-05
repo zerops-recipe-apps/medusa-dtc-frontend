@@ -1,7 +1,7 @@
 # yaml-language-server: $schema=https://api.app-prg1.zerops.io/api/rest/public/settings/zerops-yaml-json-schema.json
 #
-# Standalone Next.js storefront. Setups are only `dev` and `prod`.
-# Vault keys inject as-is. `dev` deploys `./`.
+# Standalone Next.js DTC storefront. Setups: `prod`, `nextstore` (alias), and `dev`.
+# Vault keys inject as-is. Do not set MEDUSA_HOST: ${MEDUSA_HOST} in run env (self-ref).
 
 zerops:
   - setup: prod
@@ -37,6 +37,8 @@ zerops:
         httpGet:
           port: 8000
           path: /api/health
+        failureTimeout: 90s
+        retryPeriod: 10s
     run:
       base: nodejs@24
       healthCheck:
@@ -49,12 +51,72 @@ zerops:
       envVariables:
         MEDUSA_BACKEND_URL: http://${MEDUSA_HOST}:9000
         MEDUSA_PUBLISHABLE_KEY: ${CHANNEL_PUBLISHABLE_KEY}
+        CHANNEL_PUBLISHABLE_KEY: ${CHANNEL_PUBLISHABLE_KEY}
+        RELOAD_SECRET: ${RELOAD_SECRET}
         NEXT_PUBLIC_MEDUSA_BACKEND_URL: ${API_URL}
         NEXT_PUBLIC_BASE_URL: ${APP_URL}
         NEXT_PUBLIC_DEFAULT_REGION: de
         NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY: ${CHANNEL_PUBLISHABLE_KEY}
         NEXT_PUBLIC_SEARCH_ENDPOINT: ${SEARCH_URL}
         OBJECT_STORAGE_API_URL: ${storage_apiUrl}
+      start: yarn start
+
+  - setup: nextstore
+    build:
+      base: nodejs@24
+      envVariables:
+        MEDUSA_BACKEND_URL: ${API_URL}
+        MEDUSA_PUBLISHABLE_KEY: ${CHANNEL_PUBLISHABLE_KEY}
+        NEXT_PUBLIC_MEDUSA_BACKEND_URL: ${API_URL}
+        NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY: ${CHANNEL_PUBLISHABLE_KEY}
+        NEXT_PUBLIC_BASE_URL: ${APP_URL}
+        NEXT_PUBLIC_DEFAULT_REGION: de
+        NEXT_PUBLIC_SEARCH_ENDPOINT: ${SEARCH_URL}
+        OBJECT_STORAGE_API_URL: ${RUNTIME_OBJECT_STORAGE_API_URL}
+      prepareCommands:
+        - corepack enable
+      buildCommands:
+        - yarn
+        - yarn build
+      deployFiles:
+        - .next
+        - package.json
+        - next.config.js
+        - yarn.lock
+        - .yarnrc.yml
+        - node_modules
+        - public
+        - check-env-variables.js
+      cache:
+        - node_modules
+    deploy:
+      readinessCheck:
+        httpGet:
+          port: 8000
+          path: /api/health
+        failureTimeout: 90s
+        retryPeriod: 10s
+    run:
+      base: nodejs@24
+      healthCheck:
+        httpGet:
+          port: 8000
+          path: /api/health
+      ports:
+        - port: 8000
+          httpSupport: true
+      envVariables:
+        MEDUSA_BACKEND_URL: http://${MEDUSA_HOST}:9000
+        MEDUSA_PUBLISHABLE_KEY: ${CHANNEL_PUBLISHABLE_KEY}
+        CHANNEL_PUBLISHABLE_KEY: ${CHANNEL_PUBLISHABLE_KEY}
+        RELOAD_SECRET: ${RELOAD_SECRET}
+        NEXT_PUBLIC_MEDUSA_BACKEND_URL: ${API_URL}
+        NEXT_PUBLIC_BASE_URL: ${APP_URL}
+        NEXT_PUBLIC_DEFAULT_REGION: de
+        NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY: ${CHANNEL_PUBLISHABLE_KEY}
+        NEXT_PUBLIC_SEARCH_ENDPOINT: ${SEARCH_URL}
+        OBJECT_STORAGE_API_URL: ${storage_apiUrl}
+      start: yarn start
 
   - setup: dev
     build:
