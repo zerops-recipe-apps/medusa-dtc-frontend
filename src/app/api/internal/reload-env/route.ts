@@ -3,8 +3,8 @@ import { NextRequest, NextResponse } from "next/server"
 export const dynamic = "force-dynamic"
 
 /**
- * Exit so Zerops respawns next start with the current env store (publishable
- * key after medusa seed). Called from medusa `yarn reloadNextstoreEnv`.
+ * Called from medusa `yarn reloadNextstoreEnv` after seed writes CHANNEL_PUBLISHABLE_KEY.
+ * Do not exit — Zerops must keep :8000 up for readiness; key loads from env or medusa internal API.
  */
 export async function POST(request: NextRequest) {
   const secret = process.env.RELOAD_SECRET || process.env.REVALIDATE_SECRET
@@ -14,9 +14,5 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 })
   }
 
-  setTimeout(() => {
-    process.exit(0)
-  }, 250)
-
-  return NextResponse.json({ status: "reloading" })
+  return NextResponse.json({ status: "ok" })
 }
