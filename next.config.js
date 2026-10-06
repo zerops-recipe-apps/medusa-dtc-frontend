@@ -13,6 +13,10 @@ const S3_PATHNAME = process.env.MEDUSA_CLOUD_S3_PATHNAME
  */
 const nextConfig = {
   reactStrictMode: true,
+  // Next 15.5 minify plugin breaks on Node 24 (WebpackError is not a constructor).
+  experimental: {
+    serverMinification: false,
+  },
   env: {
     NEXT_PUBLIC_MEDUSA_BACKEND_URL:
       process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || process.env.API_URL || "",
