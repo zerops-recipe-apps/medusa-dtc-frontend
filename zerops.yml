@@ -6,8 +6,7 @@
 zerops:
   - setup: prod
     build:
-      # Next 15.5 production minify fails on Node 24 (WebpackError is not a constructor).
-      base: nodejs@22
+      base: nodejs@24
       envVariables:
         MEDUSA_BACKEND_URL: ${API_URL}
         MEDUSA_PUBLISHABLE_KEY: ${CHANNEL_PUBLISHABLE_KEY}
@@ -41,7 +40,7 @@ zerops:
         failureTimeout: 90s
         retryPeriod: 10s
     run:
-      base: nodejs@22
+      base: nodejs@24
       healthCheck:
         httpGet:
           port: 8000
@@ -67,7 +66,7 @@ zerops:
 
   - setup: nextstore
     build:
-      base: nodejs@22
+      base: nodejs@24
       envVariables:
         MEDUSA_BACKEND_URL: ${API_URL}
         MEDUSA_PUBLISHABLE_KEY: ${CHANNEL_PUBLISHABLE_KEY}
@@ -101,7 +100,7 @@ zerops:
         failureTimeout: 90s
         retryPeriod: 10s
     run:
-      base: nodejs@22
+      base: nodejs@24
       healthCheck:
         httpGet:
           port: 8000
